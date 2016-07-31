@@ -1,11 +1,29 @@
 
 class Move:
     # a4a5 = (self, 0, 3, 0, 4, board)
-    def __init__(self, start, end, promoting_piece=None, placing_piece=None):
+    def __init__(self, start, end, promoting_piece=None, placing_piece=None, castle=None):
         self.start = start
         self.end = end
         self.promoting_piece = promoting_piece
         self.placing_piece = placing_piece
+        self.castle = castle
+        # for the purpose of checking if move_a == move_b
+        self.params = [self.start, self.end, self.promoting_piece, self.placing_piece, self.castle]
+
+    def move_to_str(self):
+
+        def pos_to_str(pos):
+            return chr(7 - pos[1] + ord('a')) + str(pos[0] + 1)
+
+        if self.promoting_piece == None and self.placing_piece == None:
+            return pos_to_str(self.start) + pos_to_str(self.end)
+
+        if self.promoting_piece != None:
+            return pos_to_str(self.start) + pos_to_str(self.end) + ", " + self.promoting_piece
+
+        else:
+            return placing_piece + "@" + pos_to_str(self.end)
+
 
     # def __init__(self, start_row, start_col, end_row, end_col, board):
     #     self.start_row = start_row

@@ -16,4 +16,6 @@ while b.result == None:
         print "Now it's my turn"
         moves = b.get_legal_moves()
         rand_index = randint(0, len(moves) - 1)
+        print "I'm going to play " + moves[rand_index].move_to_str()
         b = b.make_move_from_move(moves[rand_index])
+print b.result + " won!!"

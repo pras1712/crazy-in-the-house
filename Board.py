@@ -91,6 +91,7 @@ class Board:
         return chess_pieces[player]
 
     # gets all moves that are legal if we ignore any checks
+    # the exclude_king parameter
     def get_legal_moves_help(self):
         position = self.position
         moves = []
@@ -116,10 +117,16 @@ class Board:
     def under_attack(self, pos, perspective):
         board_cpy = deepcopy(self)
         # pretend it's the opponent's turn
-        board_cpy.turn = 'b' if perspective == 'w' else 'w'
+        board_cpy.turn = opponent[perspective]
+        # we can pretend that castling isn't allowed because it's irrelvant to
+        # checking if a square is under attack
+        board_cpy.castling = {
+            'w': [False, False],
+            'b': [False, False]
+        }
         moves = board_cpy.get_legal_moves_help()
         for move in moves:
-            if move.end == pos:
+            if (move.end == pos) and (move.placing_piece == None):
                 return True
         return False
 
@@ -134,7 +141,9 @@ class Board:
         moves_to_return = copy(moves)
         # print [move.move_to_str() for move in moves]
         for move in moves:
+            # simulate a move
             board = self.make_move_from_move(move, True)
+            # check if that causes the player to be in check
             if board.is_in_check(self.turn):
                 moves_to_return.remove(move)
         return moves_to_return
@@ -311,13 +320,15 @@ class Board:
 
         # final adjustments
         if not sim:
-            board_cpy.turn = 'b' if board_cpy.turn == 'w' else 'w'
+            board_cpy.turn = opponent[board_cpy.turn]
             if board_cpy.turn == 'b': board_cpy.moves += 1
             board_cpy.in_check = board_cpy.is_in_check(board_cpy.turn)
 
             if board_cpy.halfmove_since_capt_pawn !=  0: # means no capture or pawn advance
                 board_cpy.halfmove_since_capt_pawn += 1
-            result = board_cpy.result_checks()
+
+            board_cpy.result = board_cpy.result_checks()
+
 
         return board_cpy
 

@@ -10,6 +10,9 @@ class Move:
         # for the purpose of checking if move_a == move_b
         self.params = [self.start, self.end, self.promoting_piece, self.placing_piece, self.castle]
 
+    def __str__(self):
+        return self.move_to_str()
+
     def move_to_str(self):
 
         def pos_to_str(pos):
@@ -22,7 +25,7 @@ class Move:
             return pos_to_str(self.start) + pos_to_str(self.end) + ", " + self.promoting_piece
 
         else:
-            return placing_piece + "@" + pos_to_str(self.end)
+            return self.placing_piece + "@" + pos_to_str(self.end)
 
 
     # def __init__(self, start_row, start_col, end_row, end_col, board):

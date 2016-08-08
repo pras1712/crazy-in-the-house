@@ -22,7 +22,9 @@ class Board:
         }
         # [True, True, True, True]
         self.ep = None
-        self.in_check = False
+        # in_check has the coordinates of the piece that is checking
+        # the king
+        self.in_check = None
         self.halfmove_since_capt_pawn = 0
         self.moves = 0
         self.in_hand = {
@@ -31,20 +33,24 @@ class Board:
         }
         self.result = None # possible values: 'w', 'b', 'd'
 
-    def print_board(self):
-        print "\n"
+    def __str__(self):
+        s = "\n"
         board = self.position
         for row in board:
             for piece in row:
                 if piece == None:
-                    print " . ",
+                    s +=  " . "
                 else:
-                    print " " + piece + " ",
-            print '\n'
+                    s +=  " " + piece + " "
+            s +=  '\n'
 
-        print "Pieces available to each player: "
-        print "White: ", self.in_hand['w']
-        print "Black: ", self.in_hand['b']
+        s +=  "Pieces available to each player: \n"
+        s +=  "White: " + str(self.in_hand['w']) + "\n"
+        s +=  "Black: " + str(self.in_hand['b']) + "\n"
+        return s
+
+    def print_board(self):
+        print self
         # print "\n"
         # board = self.position
         # for row in board:
@@ -113,22 +119,39 @@ class Board:
                 return (row, col)
         return None
 
-    # checks if a square is "under attack" from the perspective of some player
+    # better version of under attack
+    # iterates trough some under_attack_by_X()
     def under_attack(self, pos, perspective):
-        board_cpy = deepcopy(self)
-        # pretend it's the opponent's turn
-        board_cpy.turn = opponent[perspective]
-        # we can pretend that castling isn't allowed because it's irrelvant to
-        # checking if a square is under attack
-        board_cpy.castling = {
-            'w': [False, False],
-            'b': [False, False]
-        }
-        moves = board_cpy.get_legal_moves_help()
-        for move in moves:
-            if (move.end == pos) and (move.placing_piece == None):
-                return True
-        return False
+        check_fns = [under_attack_by_pawn, under_attack_by_king,
+                    under_attack_by_knight, under_attack_by_bishop,
+                    under_attack_by_rook, under_attack_by_queen]
+        old_turn = self.turn
+        self.turn = perspective
+        for check_fn in check_fns:
+            attacking_piece = check_fn(self, pos)
+            if attacking_piece != None:
+                self.turn = old_turn
+                return attacking_piece
+        self.turn = old_turn
+        return None
+
+
+    # checks if a square is "under attack" from the perspective of some player
+    # def under_attack(self, pos, perspective):
+    #     board_cpy = deepcopy(self)
+    #     # pretend it's the opponent's turn
+    #     board_cpy.turn = opponent[perspective]
+    #     # we can pretend that castling isn't allowed because it's irrelvant to
+    #     # checking if a square is under attack
+    #     board_cpy.castling = {
+    #         'w': [False, False],
+    #         'b': [False, False]
+    #     }
+    #     moves = board_cpy.get_legal_moves_help()
+    #     for move in moves:
+    #         if (move.end == pos) and (move.placing_piece == None):
+    #             return True
+    #     return False
 
 
     # checks if the player is in check
@@ -137,15 +160,60 @@ class Board:
 
 
     def get_legal_moves(self):
+        attack_fns = {
+                    'p': under_attack_by_pawn,
+                    'k': under_attack_by_king,
+                    'n': under_attack_by_knight,
+                    'b': under_attack_by_bishop,
+                    'r': under_attack_by_rook,
+                    'q': under_attack_by_queen
+                    }
+
+        checking_pos = self.in_check
         moves = self.get_legal_moves_help()
         moves_to_return = copy(moves)
         # print [move.move_to_str() for move in moves]
         for move in moves:
-            # simulate a move
-            board = self.make_move_from_move(move, True)
-            # check if that causes the player to be in check
-            if board.is_in_check(self.turn):
-                moves_to_return.remove(move)
+            # Reasons why a move could result in check:
+            #   -> (1) we were already in check, and didn't fix it
+            #       "fixing it" constitutes blocking the attack, ,
+            #       taking the piece, or moving out of the way
+            #   -> (2) moving a pinnned piece
+
+            # casework for (1)
+            # first check: we are in check, and we didn't move the
+            # king out of the way, and we didn't capture the checking
+            # piece
+            if checking_pos != None and \
+            self.get_piece(move.start[0], move.start[1]) != ('K' if self.turn == 'w' else 'k') and \
+            move.end != checking_pos:
+                # check if we blocked, by putting a pawn there and seeing if still under attack
+                end_piece = self.get_piece(move.end[0], move.end[1])
+                self.set_piece(move.end[0], move.end[1], 'p')
+                checking_piece = self.get_piece(checking_pos[0], checking_pos[1])[0]
+                attack_fn = attack_fns[checking_piece.lower()]
+                if attack_fn(self, self.get_king_pos(self.turn)) != None:
+                    moves_to_return.remove(move)
+                # undo changes
+                self.set_piece(move.end[0], move.end[1], end_piece)
+
+            # casework for (2)
+            elif checking_pos == None and move.start != None:
+                end_piece = self.get_piece(move.end[0], move.end[1])
+                moving_piece = self.get_piece(move.start[0], move.start[1])
+                self.set_piece(move.end[0], move.end[1], moving_piece)
+                self.set_piece(move.start[0], move.start[1], None)
+                if self.is_in_check(self.turn) != None:
+                    moves_to_return.remove(move)
+                # undo changes
+                self.set_piece(move.start[0], move.start[1], moving_piece)
+                self.set_piece(move.end[0], move.end[1], end_piece)
+
+            # # simulate a move
+            # board = self.make_move_from_move(move, True)
+            # # check if that causes the player to be in check
+            # if board.is_in_check(self.turn):
+            #     moves_to_return.remove(move)
         return moves_to_return
 
     def print_legal_moves(self):
@@ -201,13 +269,12 @@ class Board:
 
     def result_checks(self):
         if len(self.get_legal_moves()) == 0:
-            if self.in_check: # Checkmate!!
+            if self.in_check != None: # Checkmate!!
                 return opponent[self.turn]
             else: # Stalemate!!
                 return 'd'
         if self.halfmove_since_capt_pawn >= 50:
             return 'd'
-
 
     # note: castling rights for these catagories might already be False
     # this can probably be done with cleaner code (less hardcoding)
@@ -220,6 +287,15 @@ class Board:
             self.castling['b'][0] = False
         elif pos == (7, 7):
             self.castling['b'][1] = False
+
+    def update_in_hand(self, taken_piece):
+        if len(taken_piece) == 1:
+            board_cpy.in_hand[board_cpy.turn][switch_sides(taken_piece, board_cpy.turn)] += 1
+        else: # capturing a piece that was promoted
+            board_cpy.in_hand[board_cpy.turn]['P' if board_cpy.turn == 'w' else 'p'] += 1
+        # update castling rights
+        if taken_piece.lower() == 'r':
+            board_cpy.rook_castle_change(move.end)
 
     # sim is if this is simulated, and not a real move
     def make_move_from_move(self, move, sim=False):
@@ -316,7 +392,18 @@ class Board:
         # condition (6): promotion
         elif move.promoting_piece != None:
             board_cpy.set_piece(move.start[0], move.start[1], None)
-            board_cpy.set_piece(move.end[0], move.end[1], move.promoting_piece)
+            board_cpy.set_piece(move.end[0], move.end[1], move.promoting_piece + '*')
+            if taken_piece != None:
+                if len(taken_piece) == 1:
+                    board_cpy.in_hand[board_cpy.turn][switch_sides(taken_piece, board_cpy.turn)] += 1
+                else: # capturing a piece that was promoted
+                    board_cpy.in_hand[board_cpy.turn]['P' if board_cpy.turn == 'w' else 'p'] += 1
+                # update castling rights
+                if taken_piece.lower() == 'r':
+                    board_cpy.rook_castle_change(move.end)
+
+            board_cpy.halfmove_since_capt_pawn = 0
+
 
         # final adjustments
         if not sim:

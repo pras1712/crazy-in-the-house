@@ -18,14 +18,14 @@ class Minimax:
                 best_eval = this_eval
         return best_move, best_eval
 
-    def evaluate(self, board, maximizing_player=False, d=2):
+    def evaluate(self, board, maximizing_player=False, d=1):
         # self.count += 1
         # if self.count % 1 == 0:
         #     print self.count
         # print d
         # ''' Evaluates the position given by board to depth d '''
         if d == 0:
-            # print "eval: " + str(get_eval(b   oard))
+            # print "eval: " + str(get_eval(board))
             return get_eval(board) if maximizing_player else -1*get_eval(board)
         # white's turn, and maximizing_player is True, that means that i am white
         if board.result == 'w' or board.result == 'b':

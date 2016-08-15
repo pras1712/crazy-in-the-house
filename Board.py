@@ -20,6 +20,10 @@ class Board:
             'w': [True, True],
             'b': [True, True]
         }
+        self.castled = {
+            'w': False,
+            'b': False
+        }
         # [True, True, True, True]
         self.ep = None
         # in_check has the coordinates of the piece that is checking
@@ -39,10 +43,10 @@ class Board:
         for row in board:
             for piece in row:
                 if piece == None:
-                    s +=  " . "
+                    s +=  " .  "
                 else:
-                    s +=  " " + piece + " "
-            s +=  '\n'
+                    s +=  " " + piece + "  "
+            s +=  '\n\n'
 
         s +=  "Pieces available to each player: \n"
         s +=  "White: " + str(self.in_hand['w']) + "\n"
@@ -185,11 +189,12 @@ class Board:
             # king out of the way, and we didn't capture the checking
             # piece
             if checking_pos != None and \
-            self.get_piece(move.start[0], move.start[1]) != ('K' if self.turn == 'w' else 'k') and \
+            not (move.start != None and \
+            self.get_piece(move.start[0], move.start[1]) == ('K' if self.turn == 'w' else 'k')) and \
             move.end != checking_pos:
                 # check if we blocked, by putting a pawn there and seeing if still under attack
                 end_piece = self.get_piece(move.end[0], move.end[1])
-                self.set_piece(move.end[0], move.end[1], 'p')
+                self.set_piece(move.end[0], move.end[1], ('P' if self.turn == 'w' else 'p'))
                 checking_piece = self.get_piece(checking_pos[0], checking_pos[1])[0]
                 attack_fn = attack_fns[checking_piece.lower()]
                 if attack_fn(self, self.get_king_pos(self.turn)) != None:
@@ -383,6 +388,8 @@ class Board:
                 rook = board_cpy.get_piece(move.end[0], move.end[1] + 2)
                 board_cpy.set_piece(move.end[0], move.end[1] + 2, None)
                 board_cpy.set_piece(move.end[0], move.end[1] - 1, rook)
+            board_cpy.castled[board_cpy.turn] = True
+            board_cpy.castling[board_cpy.turn] = [False, False]
 
         # condition (5): placement
         elif move.placing_piece != None:

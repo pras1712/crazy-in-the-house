@@ -18,6 +18,16 @@ class GamePlayer:
         if self.log:
             print s
 
+    def print_result(self):
+        board = self.board
+        # winner
+        if board.result == 'd':
+            print "DRAWN GAME"
+        else:
+            print "WINNER: ", (board.white if board.result == 'w' else board.black)
+        print "Number of moves: ", board.moves
+
+
     def play_game(self):
         while self.board.result == None:
             self.print_log(self.board)
@@ -26,3 +36,4 @@ class GamePlayer:
             else:
                 move, ev = self.black_engine.get_best_move(self.board)
             self.board = self.board.make_move_from_move(move)
+        self.print_result()

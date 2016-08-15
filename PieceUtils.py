@@ -44,12 +44,18 @@ def get_legal_moves_for_pawn(board, pos):
         if (board.get_piece(pos[0] + direction, pos[1]) == None):
             for piece in promotion_pieces[board.turn]:
                 legal_moves.append(Move(pos, (pos[0] + direction, pos[1]), piece[0]))
-        if not is_mine(board, board.get_piece(pos[0] + direction, pos[1] + direction)):
-            for piece in promotion_pieces[board.turn]:
-                legal_moves.append(Move(pos, (pos[0] + direction, pos[1] + direction), piece[0]))
-        if not is_mine(board, board.get_piece(pos[0] + direction, pos[1] - direction)):
-            for piece in promotion_pieces[board.turn]:
-                legal_moves.append(Move(pos, (pos[0] + direction, pos[1] - direction), piece[0]))
+
+        if in_bounds(pos[0] + direction, pos[1] + direction):
+            left_capture = board.get_piece(pos[0] + direction, pos[1] + direction)
+            if left_capture != None and not is_mine(board, left_capture):
+                for piece in promotion_pieces[board.turn]:
+                    legal_moves.append(Move(pos, (pos[0] + direction, pos[1] + direction), piece[0]))
+
+        if in_bounds(pos[0] + direction, pos[1] - direction):
+            right_capture = board.get_piece(pos[0] + direction, pos[1] - direction)
+            if right_capture != None and not is_mine(board, right_capture):
+                for piece in promotion_pieces[board.turn]:
+                    legal_moves.append(Move(pos, (pos[0] + direction, pos[1] - direction), piece[0]))
 
     else:
 
@@ -125,7 +131,7 @@ def get_legal_moves_for_knight(board, pos):
     return legal_moves
 
 def under_attack_by_knight(board, pos):
-    opp_knight = 'K' if board.turn == 'b' else 'k'
+    opp_knight = 'N' if board.turn == 'b' else 'n'
     pos_deltas = [
         (1, 2), (2, 1),
         (-1, 2), (-2, 1),
@@ -160,7 +166,7 @@ def under_attack_by_bishop(board, pos):
         while valid_br(board, (pos[0] + delta[0]*dist, pos[1] + delta[1]*dist)):
             piece = board.get_piece(pos[0] + delta[0]*dist, pos[1] + delta[1]*dist)
             if piece == opp_bishop: return (pos[0] + delta[0]*dist, pos[1] + delta[1]*dist)
-            if piece != None : return None
+            if piece != None : break
             dist += 1
     return None
 
@@ -186,7 +192,7 @@ def under_attack_by_rook(board, pos):
         while valid_br(board, (pos[0] + delta[0]*dist, pos[1] + delta[1]*dist)):
             piece = board.get_piece(pos[0] + delta[0]*dist, pos[1] + delta[1]*dist)
             if piece == opp_rook: return (pos[0] + delta[0]*dist, pos[1] + delta[1]*dist)
-            if piece != None : return None
+            if piece != None : break
             dist += 1
     return None
 
@@ -203,7 +209,7 @@ def under_attack_by_queen(board, pos):
         while valid_br(board, (pos[0] + delta[0]*dist, pos[1] + delta[1]*dist)):
             piece = board.get_piece(pos[0] + delta[0]*dist, pos[1] + delta[1]*dist)
             if piece == opp_queen: return (pos[0] + delta[0]*dist, pos[1] + delta[1]*dist)
-            if piece != None : return None
+            if piece != None : break
             dist += 1
     return None
 
@@ -234,7 +240,7 @@ def get_legal_moves_for_king(board, pos):
         ]
     for delta in pos_deltas:
         if valid_br(board, (delta[0] + pos[0], delta[1] + pos[1])) and \
-        board.under_attack((delta[0] + pos[0], delta[1] + pos[1]), board.turn) == None:
+        (board.under_attack((delta[0] + pos[0], delta[1] + pos[1]), board.turn) == None):
             legal_moves.append(Move(pos, (delta[0] + pos[0], delta[1] + pos[1])))
 
     # kingside castle case

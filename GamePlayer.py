@@ -28,12 +28,20 @@ class GamePlayer:
         print "Number of moves: ", board.moves
 
 
+    def print_move_information(self, move):
+        player = "White" if self.board.turn == 'w' else "Black"
+        print "Move: ", self.board.moves
+        print player, "played the move ", str(move)        
+
     def play_game(self):
         while self.board.result == None:
             self.print_log(self.board)
+            if self.board.in_check != None:
+                print self.board.turn, " is in check from: ", self.board.in_check
             if self.board.turn == 'w':
                 move, ev = self.white_engine.get_best_move(self.board)
             else:
                 move, ev = self.black_engine.get_best_move(self.board)
+            self.print_move_information(move)
             self.board = self.board.make_move_from_move(move)
         self.print_result()

@@ -6,8 +6,8 @@ def get_eval(board):
     eval_weights = {
         is_checkmate: 10000,
         on_board_material_advantage: 20,
-        in_hand_material_advantage: 30,
-        king_safety: 7,
+        in_hand_material_advantage: 24,
+        king_safety: 5,
         mobility: 0.5,
         pieces_at_center: 5
     }
@@ -48,6 +48,7 @@ def king_safety(board):
     total = 0
     if board.castled[board.turn]: total += 4
     total += len([castle for castle in board.castling[board.turn] if castle == True])
+    if board.in_check total -= 2
     return total
 
 def mobility(board):

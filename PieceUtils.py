@@ -88,8 +88,8 @@ def get_legal_moves_for_pawn(board, pos):
         if (pos[0] == 1 and board.turn == 'w') or (pos[0] == 6 and board.turn == 'b'):
             if (board.get_piece(pos[0] + direction, pos[1]) == None):
                  legal_moves.append(Move(pos, (pos[0] + direction, pos[1])))
-            if (board.get_piece(pos[0] + 2*direction, pos[1]) == None):
-                legal_moves.append(Move(pos, (pos[0] + 2*direction, pos[1])))
+                 if (board.get_piece(pos[0] + 2*direction, pos[1]) == None):
+                     legal_moves.append(Move(pos, (pos[0] + 2*direction, pos[1])))
 
 
     return legal_moves

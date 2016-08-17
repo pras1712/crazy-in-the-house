@@ -1,7 +1,7 @@
 from Board import *
 from Evaluation import get_eval
 
-class Minimax:
+class AlphaBeta:
     def __init__(self):
         self.count = 0
         pass
@@ -19,11 +19,8 @@ class Minimax:
         print "positions evaluated: ", self.count
         return best_move, best_eval
 
-    def evaluate(self, board, maximizing_player=False, d=1):
+    def evaluate(self, board, alpha=float("-inf"), beta=float("inf"), maximizing_player=False, d=2):
         self.count += 1
-        # if self.count % 1 == 0:
-        #     print self.count
-        # print d
         # ''' Evaluates the position given by board to depth d '''
         if d == 0:
             # print "eval: " + str(get_eval(board))
@@ -38,17 +35,15 @@ class Minimax:
             highest_eval = float('-inf')
             for move in moves:
                 next_pos = board.make_move_from_move(move)
-                this_eval = self.evaluate(next_pos, False, d-1)
-                # print move.move_to_str() + "*evals to" + str(this_eval)
-                if this_eval > highest_eval:
-                    highest_eval = this_eval
+                highest_eval = max(highest_eval, self.evaluate(next_pos, alpha, beta, False, d - 1))
+                if beta <= alpha:
+                    break
             return highest_eval
         else:
             lowest_eval = float('inf')
             for move in moves:
                 next_pos = board.make_move_from_move(move)
-                this_eval = self.evaluate(next_pos, True, d-1)
-                # print move.move_to_str() + "evals to" + str(this_eval)
-                if this_eval < lowest_eval:
-                    lowest_eval = this_eval
+                lowest_eval = min(lowest_eval, self.evaluate(next_pos, alpha, beta, True, d - 1))
+                if beta <= alpha:
+                    break
             return lowest_eval

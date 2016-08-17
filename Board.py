@@ -10,6 +10,7 @@ from itertools import product
 from PieceUtils import *
 from Move import Move
 from copy import deepcopy, copy
+from random import shuffle
 
 class Board:
     def __init__(self, white="White", black="Black", position=None):
@@ -30,7 +31,7 @@ class Board:
         # the king
         self.in_check = None
         self.halfmove_since_capt_pawn = 0
-        self.moves = 0
+        self.moves = 1
         self.in_hand = {
             'w': {piece:0 for piece in chess_pieces['w'] if piece != 'K'},
             'b': {piece:0 for piece in chess_pieces['b'] if piece != 'k'}
@@ -219,6 +220,7 @@ class Board:
             # # check if that causes the player to be in check
             # if board.is_in_check(self.turn):
             #     moves_to_return.remove(move)
+        shuffle(moves_to_return)
         return moves_to_return
 
     def print_legal_moves(self):
@@ -280,6 +282,7 @@ class Board:
                 return 'd'
         if self.halfmove_since_capt_pawn >= 50:
             return 'd'
+        return None
 
     # note: castling rights for these catagories might already be False
     # this can probably be done with cleaner code (less hardcoding)
@@ -302,8 +305,8 @@ class Board:
         if taken_piece.lower() == 'r':
             board_cpy.rook_castle_change(move.end)
 
-    # sim is if this is simulated, and not a real move
-    def make_move_from_move(self, move, sim=False):
+    # makes move given an instance of Move (rather than a string)
+    def make_move_from_move(self, move):
 
         def switch_sides(piece, player):
             return piece.upper() if player == 'w' else piece.lower()
@@ -413,15 +416,14 @@ class Board:
 
 
         # final adjustments
-        if not sim:
-            board_cpy.turn = opponent[board_cpy.turn]
-            if board_cpy.turn == 'b': board_cpy.moves += 1
-            board_cpy.in_check = board_cpy.is_in_check(board_cpy.turn)
+        board_cpy.turn = opponent[board_cpy.turn]
+        if board_cpy.turn == 'w': board_cpy.moves += 1
+        board_cpy.in_check = board_cpy.is_in_check(board_cpy.turn)
 
-            if board_cpy.halfmove_since_capt_pawn !=  0: # means no capture or pawn advance
-                board_cpy.halfmove_since_capt_pawn += 1
+        if board_cpy.halfmove_since_capt_pawn !=  0: # means no capture or pawn advance
+            board_cpy.halfmove_since_capt_pawn += 1
 
-            board_cpy.result = board_cpy.result_checks()
+        board_cpy.result = board_cpy.result_checks()
 
 
         return board_cpy
